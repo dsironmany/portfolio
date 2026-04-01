@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Davvid — Music · Design · Technology</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #080810;
+    --bg2: #0d0d1a;
+    --gold: #c9a84c;
+    --gold2: #f0c96b;
+    --blue: #2a6fff;
+    --blue2: #5b9aff;
+    --white: #f0eeea;
+    --muted: #6b6b80;
+    --border: rgba(201,168,76,0.15);
+    --glow-gold: 0 0 40px rgba(201,168,76,0.25);
+    --glow-blue: 0 0 40px rgba(42,111,255,0.25);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'Syne', sans-serif;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* ── CUSTOM CURSOR ── */
+  #cursor {
+    width: 12px; height: 12px;
+    background: var(--gold);
+    border-radius: 50%;
+    position: fixed; top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%,-50%);
+    transition: width .2s, height .2s, background .2s;
+    mix-blend-mode: difference;
+  }
+  #cursor-ring {
+    width: 38px; height: 38px;
+    border: 1px solid rgba(201,168,76,0.5);
+    border-radius: 50%;
+    position: fixed; top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%,-50%);
+    transition: transform .12s ease, width .2s, height .2s, border-color .2s;
+  }
+  body:has(a:hover) #cursor, body:has(button:hover) #cursor { width: 20px; height: 20px; background: var(--gold2); }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 999; opacity: .6;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 28px 60px;
+    background: linear-gradient(to bottom, rgba(8,8,16,0.95), transparent);
+    backdrop-filter: blur(0px);
+    transition: backdrop-filter .4s, padding .4s;
+  }
+  nav.scrolled { backdrop-filter: blur(20px); padding: 18px 60px; border-bottom: 1px solid var(--border); }
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-decoration: none;
+  }
+  .nav-links { display: flex; gap: 40px; list-style: none; }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: color .3s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute; bottom: -4px; left: 0; right: 0;
+    height: 1px; background: var(--gold);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .3s;
+  }
+  .nav-links a:hover { color: var(--gold); }
+  .nav-links a:hover::after { transform: scaleX(1); }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    display: grid; place-items: center;
+    position: relative; overflow: hidden;
+    padding: 120px 60px 80px;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 70% 50%, rgba(42,111,255,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 60% at 20% 80%, rgba(201,168,76,0.08) 0%, transparent 70%);
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px);
+    background-size: 80px 80px;
+    mask-image: radial-gradient(ellipse at center, black 20%, transparent 80%);
+  }
+  .hero-inner { position: relative; z-index: 2; max-width: 1100px; width: 100%; }
+  .hero-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--gold);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: fadeUp .8s .2s forwards;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    display: block; width: 40px; height: 1px;
+    background: var(--gold);
+  }
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(80px, 14vw, 180px);
+    line-height: 0.9;
+    letter-spacing: -2px;
+    color: var(--white);
+    opacity: 0;
+    animation: fadeUp .9s .4s forwards;
+  }
+  .hero-title span {
+    display: block;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold2) 40%, var(--blue2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-sub {
+    margin-top: 32px;
+    font-size: clamp(16px, 2vw, 22px);
+    font-weight: 400;
+    color: var(--muted);
+    max-width: 520px;
+    line-height: 1.7;
+    opacity: 0;
+    animation: fadeUp .9s .6s forwards;
+  }
+  .hero-sub em { color: var(--gold); font-style: normal; }
+  .hero-cta-row {
+    margin-top: 52px;
+    display: flex; gap: 20px; align-items: center;
+    opacity: 0;
+    animation: fadeUp .9s .8s forwards;
+  }
+  .btn-primary {
+    background: var(--gold);
+    color: #080810;
+    border: none;
+    padding: 16px 38px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    display: inline-block;
+    position: relative; overflow: hidden;
+    transition: box-shadow .3s, transform .2s;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  }
+  .btn-primary:hover { box-shadow: var(--glow-gold); transform: translateY(-2px); }
+  .btn-ghost {
+    border: 1px solid var(--border);
+    color: var(--white);
+    padding: 15px 38px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    display: inline-block;
+    transition: border-color .3s, color .3s;
+  }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+  .hero-scroll-hint {
+    position: absolute; bottom: 40px; left: 60px;
+    display: flex; align-items: center; gap: 14px;
+    opacity: 0;
+    animation: fadeUp .9s 1.2s forwards;
+  }
+  .scroll-line {
+    width: 1px; height: 60px;
+    background: linear-gradient(to bottom, transparent, var(--gold));
+    animation: scrollPulse 2s infinite;
+  }
+  .scroll-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    writing-mode: vertical-rl;
+  }
+
+  /* ── FLOATING WAVEFORM ── */
+  .waveform {
+    position: absolute; right: 60px; top: 50%;
+    transform: translateY(-50%);
+    display: flex; align-items: center; gap: 5px;
+    opacity: 0;
+    animation: fadeIn 1.2s 1s forwards;
+  }
+  .wave-bar {
+    width: 3px;
+    background: linear-gradient(to top, var(--blue), var(--gold));
+    border-radius: 2px;
+    animation: waveAnim 1.2s ease-in-out infinite;
+    opacity: 0.6;
+  }
+
+  /* ── SECTION SHARED ── */
+  section { padding: 120px 60px; max-width: 1200px; margin: 0 auto; }
+  .section-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .section-tag::before {
+    content: ''; display: block;
+    width: 30px; height: 1px; background: var(--gold);
+  }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 7vw, 90px);
+    line-height: 1;
+    letter-spacing: 1px;
+    color: var(--white);
+    margin-bottom: 60px;
+  }
+
+  /* ── ABOUT ── */
+  #about { border-top: 1px solid var(--border); }
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 80px;
+    align-items: center;
+  }
+  .about-left { position: relative; }
+  .about-img-wrap {
+    width: 100%;
+    aspect-ratio: 3/4;
+    background: var(--bg2);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .about-img-wrap::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(42,111,255,0.1));
+  }
+  .about-initial {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 200px;
+    color: rgba(201,168,76,0.08);
+    z-index: 1;
+    user-select: none;
+  }
+  .about-corner {
+    position: absolute; bottom: -20px; right: -20px;
+    width: 80px; height: 80px;
+    border: 2px solid var(--gold);
+    opacity: 0.4;
+  }
+  .about-right p {
+    font-size: 18px;
+    line-height: 1.9;
+    color: rgba(240,238,234,0.75);
+    margin-bottom: 24px;
+  }
+  .about-right p strong { color: var(--gold); font-weight: 700; }
+  .about-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 30px; margin-top: 50px;
+    padding-top: 40px;
+    border-top: 1px solid var(--border);
+  }
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  /* ── SKILLS ── */
+  #skills {
+    border-top: 1px solid var(--border);
+    background: linear-gradient(180deg, transparent 0%, rgba(201,168,76,0.02) 50%, transparent 100%);
+  }
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+  }
+  .skill-card {
+    background: var(--bg2);
+    padding: 52px 40px;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: border-color .4s, transform .3s;
+    cursor: default;
+  }
+  .skill-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(201,168,76,0.05), transparent);
+    opacity: 0; transition: opacity .4s;
+  }
+  .skill-card:hover { border-color: rgba(201,168,76,0.4); transform: translateY(-4px); }
+  .skill-card:hover::before { opacity: 1; }
+  .skill-card:nth-child(2) { border-color: rgba(42,111,255,0.2); }
+  .skill-card:nth-child(2)::before { background: linear-gradient(135deg, rgba(42,111,255,0.06), transparent); }
+  .skill-card:nth-child(2):hover { border-color: rgba(42,111,255,0.5); }
+  .skill-icon {
+    font-size: 40px; margin-bottom: 28px;
+    display: block;
+  }
+  .skill-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    letter-spacing: 2px;
+    color: var(--white);
+    margin-bottom: 16px;
+  }
+  .skill-desc {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--muted);
+  }
+  .skill-tags {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-top: 28px;
+  }
+  .skill-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    text-transform: uppercase;
+    transition: border-color .3s, color .3s;
+  }
+  .skill-card:hover .skill-tag { border-color: rgba(201,168,76,0.3); color: var(--gold); }
+  .skill-card:nth-child(2):hover .skill-tag { border-color: rgba(42,111,255,0.4); color: var(--blue2); }
+  .skill-number {
+    position: absolute; top: 30px; right: 36px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 80px;
+    color: rgba(201,168,76,0.04);
+    line-height: 1;
+    user-select: none;
+  }
+
+  /* ── PROJECTS ── */
+  #projects { border-top: 1px solid var(--border); }
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3px;
+  }
+  .project-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    position: relative;
+    transition: border-color .4s;
+    cursor: pointer;
+  }
+  .project-card:first-child { grid-column: span 2; }
+  .project-card:hover { border-color: rgba(201,168,76,0.35); }
+  .project-visual {
+    aspect-ratio: 16/7;
+    position: relative;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .project-card:not(:first-child) .project-visual { aspect-ratio: 4/3; }
+  .project-bg {
+    position: absolute; inset: 0;
+    transition: transform .6s ease;
+  }
+  .project-card:hover .project-bg { transform: scale(1.04); }
+  .pv1 { background: linear-gradient(135deg, #0a0a18 0%, #0d1a3a 40%, #1a0d2e 100%); }
+  .pv2 { background: linear-gradient(135deg, #0a0a18 0%, #1a1200 60%, #0d0a00 100%); }
+  .pv3 { background: linear-gradient(135deg, #0a0a18 0%, #001a1a 60%, #001008 100%); }
+  .pv4 { background: linear-gradient(135deg, #0a0a18 0%, #1a0010 60%, #0d000a 100%); }
+  .project-art {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+  }
+  .p-rings {
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    border: 1px solid rgba(42,111,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    animation: rotate 10s linear infinite;
+    box-shadow: 0 0 60px rgba(42,111,255,0.1), inset 0 0 60px rgba(42,111,255,0.05);
+  }
+  .p-rings::before {
+    content: '';
+    width: 130px; height: 130px;
+    border-radius: 50%;
+    border: 1px solid rgba(201,168,76,0.4);
+    position: absolute;
+    animation: rotate 6s linear infinite reverse;
+    box-shadow: 0 0 40px rgba(201,168,76,0.1);
+  }
+  .p-rings::after {
+    content: '♫';
+    font-size: 48px;
+    color: rgba(201,168,76,0.6);
+    animation: rotate 10s linear infinite reverse;
+  }
+  .p-grid-art {
+    width: 100%; height: 100%;
+    background-image:
+      linear-gradient(rgba(201,168,76,0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.08) 1px, transparent 1px);
+    background-size: 40px 40px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .p-grid-art span {
+    font-size: 80px;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .p-wave-art {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+  }
+  .p-wave-bar {
+    width: 4px; border-radius: 2px;
+    background: linear-gradient(to top, rgba(42,111,255,0.3), rgba(91,154,255,0.8));
+    animation: waveAnim 1.2s ease-in-out infinite;
+  }
+  .p-code-art {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: rgba(91,154,255,0.5);
+    padding: 20px;
+    white-space: pre-wrap;
+    line-height: 1.8;
+    letter-spacing: 1px;
+  }
+  .project-info {
+    padding: 32px 36px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .project-cat {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .project-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 1px;
+    color: var(--white);
+  }
+  .project-arrow {
+    width: 42px; height: 42px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted);
+    font-size: 18px;
+    transition: border-color .3s, color .3s, transform .3s;
+    flex-shrink: 0; align-self: center;
+  }
+  .project-card:hover .project-arrow { border-color: var(--gold); color: var(--gold); transform: translate(3px, -3px); }
+
+  /* ── CONTACT ── */
+  #contact {
+    border-top: 1px solid var(--border);
+    text-align: center;
+    padding: 140px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  #contact::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 100%, rgba(201,168,76,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .contact-inner { position: relative; z-index: 2; }
+  .contact-big {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(60px, 12vw, 150px);
+    line-height: 0.9;
+    color: rgba(201,168,76,0.06);
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+    letter-spacing: 8px;
+  }
+  .contact-sub { font-size: 14px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 24px; }
+  .contact-heading {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(52px, 8vw, 100px);
+    line-height: 1;
+    color: var(--white);
+    margin-bottom: 24px;
+  }
+  .contact-heading span { color: var(--gold); }
+  .contact-para {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 480px;
+    margin: 0 auto 48px;
+    line-height: 1.8;
+  }
+  .contact-email {
+    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(201,168,76,0.3);
+    padding-bottom: 4px;
+    transition: border-color .3s;
+    display: inline-block; margin-bottom: 48px;
+  }
+  .contact-email:hover { border-color: var(--gold); }
+  .social-row {
+    display: flex; justify-content: center; gap: 24px;
+    margin-top: 40px;
+  }
+  .social-link {
+    width: 48px; height: 48px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted);
+    text-decoration: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    transition: border-color .3s, color .3s;
+  }
+  .social-link:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 30px 60px;
+    display: flex; justify-content: space-between; align-items: center;
+    max-width: 1200px; margin: 0 auto;
+  }
+  footer span {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--gold);
+    letter-spacing: 4px;
+    opacity: 0.5;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+  @keyframes waveAnim {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(2.5); }
+  }
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-16px); }
+  }
+
+  /* ── REVEAL ON SCROLL ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity .9s ease, transform .9s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── MOBILE ── */
+  @media (max-width: 768px) {
+    nav { padding: 20px 24px; }
+    nav.scrolled { padding: 14px 24px; }
+    .nav-links { gap: 20px; }
+    .nav-links a { font-size: 11px; letter-spacing: 1px; }
+    section { padding: 80px 24px; }
+    #hero { padding: 120px 24px 80px; }
+    .hero-scroll-hint, .waveform { display: none; }
+    .about-grid { grid-template-columns: 1fr; gap: 50px; }
+    .about-img-wrap { aspect-ratio: 1/1; }
+    .about-stats { grid-template-columns: repeat(3,1fr); }
+    .skills-grid { grid-template-columns: 1fr; }
+    .projects-grid { grid-template-columns: 1fr; }
+    .project-card:first-child { grid-column: span 1; }
+    footer { flex-direction: column; gap: 16px; text-align: center; }
+    #contact { padding: 100px 24px; }
+    body { cursor: auto; }
+    #cursor, #cursor-ring { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="#" class="nav-logo">DAVVID</a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#projects">Work</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero" style="max-width:100%;padding-top:0;padding-bottom:0;">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Multi-disciplinary creator</div>
+    <h1 class="hero-title">
+      Hi, I'm<br>
+      <span>Davvid.</span>
+    </h1>
+    <p class="hero-sub">
+      Where <em>sound meets design</em> and technology becomes art.
+      Crafting experiences that resonate, visually and sonically.
+    </p>
+    <div class="hero-cta-row">
+      <a href="#projects" class="btn-primary">View My Work</a>
+      <a href="#contact" class="btn-ghost">Get in Touch</a>
+    </div>
+  </div>
+
+  <!-- Waveform decoration -->
+  <div class="waveform" id="waveformDeco"></div>
+
+  <div class="hero-scroll-hint">
+    <div class="scroll-line"></div>
+    <span class="scroll-label">Scroll</span>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-grid">
+    <div class="about-left reveal">
+      <div class="about-img-wrap">
+        <div class="about-initial">D</div>
+      </div>
+      <div class="about-corner"></div>
+    </div>
+    <div class="about-right reveal">
+      <div class="section-tag">About Me</div>
+      <h2 class="section-title" style="font-size:clamp(40px,5vw,70px);margin-bottom:32px;">The Creator<br>Behind the Sound</h2>
+      <p>
+        I'm <strong>Davvid</strong> — a multi-disciplinary creator operating at the intersection of <strong>music production</strong>, visual design, and digital innovation. Every project is a pursuit of something that hasn't existed before.
+      </p>
+      <p>
+        From constructing intricate soundscapes and beat architectures to crafting visual identities and interactive digital experiences, my work is driven by a single question: <strong>what does the future feel like?</strong>
+      </p>
+      <p>
+        I believe the most powerful art lives where disciplines collide. That's where I build.
+      </p>
+      <div class="about-stats">
+        <div>
+          <div class="stat-num">50+</div>
+          <div class="stat-label">Tracks Produced</div>
+        </div>
+        <div>
+          <div class="stat-num">30+</div>
+          <div class="stat-label">Projects Delivered</div>
+        </div>
+        <div>
+          <div class="stat-num">6+</div>
+          <div class="stat-label">Years Creating</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section id="skills" style="max-width:100%;">
+<div style="max-width:1200px;margin:0 auto;padding:0 60px;">
+  <div class="section-tag reveal">What I Do</div>
+  <h2 class="section-title reveal">Core<br>Disciplines</h2>
+</div>
+  <div class="skills-grid">
+    <div class="skill-card reveal">
+      <div class="skill-number">01</div>
+      <span class="skill-icon">🎛️</span>
+      <div class="skill-name">Music Production</div>
+      <p class="skill-desc">Architecting sound from silence — beats, melodies, and full compositions that move people. Specialised in trap, lo-fi, cinematic, and experimental genres.</p>
+      <div class="skill-tags">
+        <span class="skill-tag">Ableton Live</span>
+        <span class="skill-tag">Sound Design</span>
+        <span class="skill-tag">Mixing</span>
+        <span class="skill-tag">Mastering</span>
+      </div>
+    </div>
+    <div class="skill-card reveal" style="transition-delay:.1s;">
+      <div class="skill-number">02</div>
+      <span class="skill-icon">✦</span>
+      <div class="skill-name">Design</div>
+      <p class="skill-desc">Visual identities, album artwork, motion graphics, and UI design that feel as intentional as they are striking. Design is never decoration — it's communication.</p>
+      <div class="skill-tags">
+        <span class="skill-tag">Figma</span>
+        <span class="skill-tag">After Effects</span>
+        <span class="skill-tag">Brand Identity</span>
+        <span class="skill-tag">Motion</span>
+      </div>
+    </div>
+    <div class="skill-card reveal" style="transition-delay:.2s;">
+      <div class="skill-number">03</div>
+      <span class="skill-icon">⚡</span>
+      <div class="skill-name">Technology</div>
+      <p class="skill-desc">Building digital products and experiences that push creative boundaries — from interactive web experiences to AI-driven tools for artists and creators.</p>
+      <div class="skill-tags">
+        <span class="skill-tag">Web Dev</span>
+        <span class="skill-tag">React</span>
+        <span class="skill-tag">AI Tools</span>
+        <span class="skill-tag">Creative Code</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="section-tag reveal">Selected Work</div>
+  <h2 class="section-title reveal">Projects</h2>
+  <div class="projects-grid">
+
+    <!-- Featured -->
+    <div class="project-card reveal">
+      <div class="project-visual">
+        <div class="project-bg pv1"></div>
+        <div class="project-art">
+          <div class="p-rings"></div>
+        </div>
+      </div>
+      <div class="project-info">
+        <div>
+          <div class="project-cat">Music Production · Featured</div>
+          <div class="project-name">Eclipse — EP</div>
+        </div>
+        <div class="project-arrow">↗</div>
+      </div>
+    </div>
+
+    <!-- Design -->
+    <div class="project-card reveal" style="transition-delay:.1s;">
+      <div class="project-visual">
+        <div class="project-bg pv2"></div>
+        <div class="project-art">
+          <div class="p-grid-art">
+            <span>◈</span>
+          </div>
+        </div>
+      </div>
+      <div class="project-info">
+        <div>
+          <div class="project-cat">Design · Branding</div>
+          <div class="project-name">Aura Visual Identity</div>
+        </div>
+        <div class="project-arrow">↗</div>
+      </div>
+    </div>
+
+    <!-- Beats -->
+    <div class="project-card reveal" style="transition-delay:.15s;">
+      <div class="project-visual">
+        <div class="project-bg pv3"></div>
+        <div class="project-art">
+          <div class="p-wave-art" id="pWaves"></div>
+        </div>
+      </div>
+      <div class="project-info">
+        <div>
+          <div class="project-cat">Music · Beats</div>
+          <div class="project-name">Ghost Frequency Pack</div>
+        </div>
+        <div class="project-arrow">↗</div>
+      </div>
+    </div>
+
+    <!-- Digital -->
+    <div class="project-card reveal" style="transition-delay:.2s;">
+      <div class="project-visual">
+        <div class="project-bg pv4"></div>
+        <div class="project-art">
+          <div class="p-code-art">const create = () => {
+  layer(sound);
+  layer(vision);
+  return art;
+}</div>
+        </div>
+      </div>
+      <div class="project-info">
+        <div>
+          <div class="project-cat">Technology · Digital</div>
+          <div class="project-name">ArtEngine Platform</div>
+        </div>
+        <div class="project-arrow">↗</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" style="max-width:100%;">
+  <div class="contact-big">DAVVID</div>
+  <div class="contact-inner reveal">
+    <p class="contact-sub">Let's create together</p>
+    <h2 class="contact-heading">Start a<br><span>Conversation.</span></h2>
+    <p class="contact-para">
+      Whether it's music, design, technology — or something that doesn't have a name yet. I'm always open to interesting collaborations.
+    </p>
+    <a href="mailto:hello@davvid.co" class="contact-email">hello@davvid.co</a>
+    <br>
+    <a href="mailto:hello@davvid.co" class="btn-primary" style="margin-top:8px;">Send a Message</a>
+    <div class="social-row">
+      <a href="#" class="social-link">IG</a>
+      <a href="#" class="social-link">SC</a>
+      <a href="#" class="social-link">TW</a>
+      <a href="#" class="social-link">YT</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span>© 2025 Davvid. All rights reserved.</span>
+  <div class="footer-logo">DAVVID</div>
+  <span style="text-align:right;">Music · Design · Technology</span>
+</footer>
+
+<script>
+  // ── Cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursor-ring');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+  function animCursor() {
+    cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+    rx += (mx - rx) * 0.14; ry += (my - ry) * 0.14;
+    ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+    requestAnimationFrame(animCursor);
+  }
+  animCursor();
+
+  // ── Nav scroll
+  const nav = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 60);
+  });
+
+  // ── Hero waveform
+  const wf = document.getElementById('waveformDeco');
+  const heights = [20,35,55,80,60,100,70,45,85,65,40,90,55,30,60,45,75,50,35,65];
+  heights.forEach((h, i) => {
+    const b = document.createElement('div');
+    b.className = 'wave-bar';
+    b.style.height = h + 'px';
+    b.style.animationDelay = (i * 0.08) + 's';
+    b.style.animationDuration = (1 + Math.random() * 0.6) + 's';
+    wf.appendChild(b);
+  });
+
+  // ── Project waves
+  const pw = document.getElementById('pWaves');
+  for (let i = 0; i < 28; i++) {
+    const b = document.createElement('div');
+    b.className = 'p-wave-bar';
+    const h = 20 + Math.random() * 60;
+    b.style.height = h + 'px';
+    b.style.animationDelay = (i * 0.07) + 's';
+    b.style.animationDuration = (0.8 + Math.random() * 0.8) + 's';
+    pw.appendChild(b);
+  }
+
+  // ── Reveal on scroll
+  const reveals = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach((e, idx) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), idx * 40);
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => io.observe(el));
+</script>
+</body>
+</html>
